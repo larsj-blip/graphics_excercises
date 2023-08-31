@@ -8,7 +8,8 @@
 #![allow(unused_variables)]
 */
 extern crate nalgebra_glm as glm;
-use std::{ mem, ptr, os::raw::c_void };
+
+use std::{mem, ptr, os::raw::c_void};
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
 
@@ -54,20 +55,61 @@ fn offset<T>(n: u32) -> *const c_void {
 
 // == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
-    // Implement me!
-
-    // Also, feel free to delete comments :)
-
-    // This should:
     // * Generate a VAO and bind it
+    let mut vertex_id: u32 = 0;
+    gl::GenVertexArrays(1, &mut vertex_id);
+    gl::BindVertexArray(vertex_id);
+
     // * Generate a VBO and bind it
-    // * Fill it with data
+    let mut buffer_id: u32 = 0;
+    gl::GenBuffers(1, &mut buffer_id);
+    gl::BindBuffer(gl::ARRAY_BUFFER, buffer_id);
+
+/*    // * Fill it with data
+    gl::BufferData(gl::ARRAY_BUFFER,
+                   (size_of::<f32>() * vertices.len() as i32) as isize,
+                   vertices.as_ptr().cast(),
+                   gl::STATIC_DRAW);
+    */
+
+    gl::BufferData(gl::ARRAY_BUFFER,
+                   (size_of::<f32>() * vertices.len() as i32) as isize,
+        vertices.as_ptr().cast(),
+        gl::STATIC_DRAW
+    );
+
+
     // * Configure a VAP for the data and enable it
+    const INDEX: gl::types::GLuint = 0;
+    gl::VertexAttribPointer(
+        INDEX,
+        3,
+        gl::FLOAT,
+        gl::FALSE,
+        size_of::<f32>(),
+        ptr::null()
+    );
+
+    gl::EnableVertexAttribArray(INDEX);
+
     // * Generate a IBO and bind it
+    let mut index_buffer_id = 0;
+    gl::GenBuffers(0, &mut index_buffer_id);
+    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_id);
     // * Fill it with data
+/*    gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
+                   (size_of::<u32>() * indices.len() as i32) as isize,
+                   indices.as_ptr().cast(),
+                   gl::STATIC_DRAW);
+*/
+    gl::BufferData(
+        gl::ELEMENT_ARRAY_BUFFER,
+        (indices.len() as i32*size_of::<u32>()) as gl::types::GLsizeiptr,
+        indices.as_ptr().cast(), gl::STATIC_DRAW
+    );
     // * Return the ID of the VAO
 
-    0
+    return vertex_id;
 }
 
 
@@ -132,8 +174,11 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let my_vao = unsafe { 1337 };
-
+        let my_vao = unsafe {
+            let vertices = vec![-0.6, 0.0, 0.6];
+            let indices = vec![0,0,1,2,0,1,1,2,1];
+            create_vao(&vertices, &indices)
+        };
 
         // == // Set up your shaders here
 
@@ -144,14 +189,22 @@ fn main() {
         // This snippet is not enough to do the exercise, and will need to be modified (outside
         // of just using the correct path), but it only needs to be called once
 
-        /*
-        let simple_shader = unsafe {
-            shader::ShaderBuilder::new()
-                .attach_file("./path/to/simple/shader.file")
-                .link()
-        };
-        */
 
+      /*  let simple_shader = unsafe {
+            shader::ShaderBuilder::new()
+                .attach_file("src/shader.rs")
+                .link()
+        };*/
+
+/*        unsafe {
+            gl::DrawElements(
+                gl::TRIANGLE_STRIP,
+                3,
+                gl::UNSIGNED_INT,
+                ptr::null()
+            );
+
+        }*/
 
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
@@ -194,7 +247,7 @@ fn main() {
 
 
                         // default handler:
-                        _ => { }
+                        _ => {}
                     }
                 }
             }
@@ -217,9 +270,6 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-
-
-
             }
 
             // Display the new color buffer on the display
@@ -267,9 +317,11 @@ fn main() {
                 *control_flow = ControlFlow::Exit;
             }
             // Keep track of currently pressed keys to send to the rendering thread
-            Event::WindowEvent { event: WindowEvent::KeyboardInput {
-                    input: KeyboardInput { state: key_state, virtual_keycode: Some(keycode), .. }, .. }, .. } => {
-
+            Event::WindowEvent {
+                event: WindowEvent::KeyboardInput {
+                    input: KeyboardInput { state: key_state, virtual_keycode: Some(keycode), .. }, ..
+                }, ..
+            } => {
                 if let Ok(mut keys) = arc_pressed_keys.lock() {
                     match key_state {
                         Released => {
@@ -277,7 +329,7 @@ fn main() {
                                 let i = keys.iter().position(|&k| k == keycode).unwrap();
                                 keys.remove(i);
                             }
-                        },
+                        }
                         Pressed => {
                             if !keys.contains(&keycode) {
                                 keys.push(keycode);
@@ -289,8 +341,8 @@ fn main() {
                 // Handle Escape and Q keys separately
                 match keycode {
                     Escape => { *control_flow = ControlFlow::Exit; }
-                    Q      => { *control_flow = ControlFlow::Exit; }
-                    _      => { }
+                    Q => { *control_flow = ControlFlow::Exit; }
+                    _ => {}
                 }
             }
             Event::DeviceEvent { event: DeviceEvent::MouseMotion { delta }, .. } => {
@@ -299,7 +351,7 @@ fn main() {
                     *position = (position.0 + delta.0 as f32, position.1 + delta.1 as f32);
                 }
             }
-            _ => { }
+            _ => {}
         }
     });
 }
