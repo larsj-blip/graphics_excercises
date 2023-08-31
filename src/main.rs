@@ -65,12 +65,9 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::GenBuffers(1, &mut buffer_id);
     gl::BindBuffer(gl::ARRAY_BUFFER, buffer_id);
 
-/*    // * Fill it with data
-    gl::BufferData(gl::ARRAY_BUFFER,
-                   (size_of::<f32>() * vertices.len() as i32) as isize,
-                   vertices.as_ptr().cast(),
-                   gl::STATIC_DRAW);
-    */
+    // * Fill it with data
+
+
 
     gl::BufferData(gl::ARRAY_BUFFER,
                    (size_of::<f32>() * vertices.len() as i32) as isize,
@@ -97,11 +94,7 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::GenBuffers(0, &mut index_buffer_id);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_id);
     // * Fill it with data
-/*    gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
-                   (size_of::<u32>() * indices.len() as i32) as isize,
-                   indices.as_ptr().cast(),
-                   gl::STATIC_DRAW);
-*/
+
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER,
         (indices.len() as i32*size_of::<u32>()) as gl::types::GLsizeiptr,
