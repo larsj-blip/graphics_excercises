@@ -69,8 +69,6 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::BindBuffer(gl::ARRAY_BUFFER, buffer_id);
 
     // * Fill it with data
-
-    // let size_of_vertex_array_in_bytes = (size_of::<f32>() * vertices.len() as i32) as isize;
     let size_of_vertex_array_in_bytes = byte_size_of_array(&vertices[..]);
     gl::BufferData(gl::ARRAY_BUFFER,
                    size_of_vertex_array_in_bytes,
@@ -98,9 +96,10 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_id);
     // * Fill it with data
 
+    let size_of_index_vector_in_bytes = byte_size_of_array(indices);
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER,
-        (indices.len() as i32*size_of::<u32>()) as gl::types::GLsizeiptr,
+        size_of_index_vector_in_bytes,
         indices.as_ptr().cast(), gl::STATIC_DRAW
     );
     // * Return the ID of the VAO
@@ -186,13 +185,13 @@ fn main() {
         // of just using the correct path), but it only needs to be called once
 
 
-      /*  let simple_shader = unsafe {
+/*        let simple_shader = unsafe {
             shader::ShaderBuilder::new()
                 .attach_file("src/shader.rs")
                 .link()
         };*/
 
-/*        unsafe {
+        unsafe {
             gl::DrawElements(
                 gl::TRIANGLE_STRIP,
                 3,
@@ -200,7 +199,7 @@ fn main() {
                 ptr::null()
             );
 
-        }*/
+        }
 
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
