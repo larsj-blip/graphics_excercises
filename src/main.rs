@@ -56,18 +56,19 @@ fn offset<T>(n: u32) -> *const c_void {
 // == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     // * Generate a VAO and bind it
-    let mut vertex_id: u32 = 0;
-    gl::GenVertexArrays(1, &mut vertex_id);
+    const AMOUNT_OF_OBJECTS_TO_CREATE: gl::types::GLsizei = 1;
+    const IGNORED_INITIAL_VALUE: u32 = 0;
+    
+    let mut vertex_id: u32 = IGNORED_INITIAL_VALUE;
+    gl::GenVertexArrays(AMOUNT_OF_OBJECTS_TO_CREATE, &mut vertex_id);
     gl::BindVertexArray(vertex_id);
 
     // * Generate a VBO and bind it
-    let mut buffer_id: u32 = 0;
-    gl::GenBuffers(1, &mut buffer_id);
+    let mut buffer_id: u32 = IGNORED_INITIAL_VALUE;
+    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut buffer_id);
     gl::BindBuffer(gl::ARRAY_BUFFER, buffer_id);
 
     // * Fill it with data
-
-
 
     gl::BufferData(gl::ARRAY_BUFFER,
                    (size_of::<f32>() * vertices.len() as i32) as isize,
@@ -75,12 +76,12 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
         gl::STATIC_DRAW
     );
 
-
     // * Configure a VAP for the data and enable it
     const INDEX: gl::types::GLuint = 0;
+    let rank_of_vertex_array = 3;
     gl::VertexAttribPointer(
         INDEX,
-        3,
+        rank_of_vertex_array,
         gl::FLOAT,
         gl::FALSE,
         size_of::<f32>(),
@@ -90,8 +91,8 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::EnableVertexAttribArray(INDEX);
 
     // * Generate a IBO and bind it
-    let mut index_buffer_id = 0;
-    gl::GenBuffers(0, &mut index_buffer_id);
+    let mut index_buffer_id = IGNORED_INITIAL_VALUE;
+    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut index_buffer_id);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_id);
     // * Fill it with data
 
