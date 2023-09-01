@@ -171,11 +171,24 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let my_vao = unsafe {
-            let vertices = vec![-0.6, -0.6, 0.0, 0.6, -0.6, 0.0, 0.0, 0.6, 0.0];
-            let indices = vec![1, 2, 3,3,2,1,1,3,2];
-            create_vao(&vertices, &indices)
+        let vertices = vec![-0.6, -0.6, 0.0,
+                            0.6, -0.6, 0.0,
+                            0.0, 0.6, 0.0,
+                            -0.3, -0.3, 0.0,
+                            0.3, -0.3, 0.0,
+                            0.0, 0.3, 0.0,
+                            0.2, 0.3, 0.0,
+                            -0.4, 0.9, 0.0,
+        0.0, -0.6, 0.0];
+        let triangles = vec![0, 8, 3,
+                             8, 1, 4,
+                             3, 4, 5,
+            6,7,8
+        ];
+        let vao_1 = unsafe {
+            create_vao(&vertices, &triangles)
         };
+
 
         // == // Set up your shaders here
 
@@ -262,12 +275,13 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                gl::BindVertexArray(my_vao);
+                gl::BindVertexArray(vao_1);
+                let size_of_indices_vector = triangles.len() as gl::types::GLsizei;
                 gl::DrawElements(
                     gl::TRIANGLES,
-                    3,
+                    size_of_indices_vector,
                     gl::UNSIGNED_INT,
-                    ptr::null(),
+                    0 as *const _
                 );
             }
 
