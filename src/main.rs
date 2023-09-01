@@ -70,10 +70,12 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
 
     // * Fill it with data
 
+    // let size_of_vertex_array_in_bytes = (size_of::<f32>() * vertices.len() as i32) as isize;
+    let size_of_vertex_array_in_bytes = byte_size_of_array(&vertices[..]);
     gl::BufferData(gl::ARRAY_BUFFER,
-                   (size_of::<f32>() * vertices.len() as i32) as isize,
-        vertices.as_ptr().cast(),
-        gl::STATIC_DRAW
+                   size_of_vertex_array_in_bytes,
+                   vertices.as_ptr().cast(),
+                   gl::STATIC_DRAW
     );
 
     // * Configure a VAP for the data and enable it
