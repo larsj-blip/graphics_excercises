@@ -53,15 +53,18 @@ fn offset<T>(n: u32) -> *const c_void {
 // ptr::null()
 
 
+const INDEX: gl::types::GLuint = 0;
+
 // == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
-    // * Generate a VAO and bind it
+    const INFER_STRIDE_FROM_RANK_AND_DATATYPE: gl::types::GLsizei = 0;
     const AMOUNT_OF_OBJECTS_TO_CREATE: gl::types::GLsizei = 1;
     const IGNORED_INITIAL_VALUE: u32 = 0;
-    
-    let mut vertex_id: u32 = IGNORED_INITIAL_VALUE;
-    gl::GenVertexArrays(AMOUNT_OF_OBJECTS_TO_CREATE, &mut vertex_id);
-    gl::BindVertexArray(vertex_id);
+    // * Generate a VAO and bind it
+
+    let mut vertex_attribute_object_id: u32 = IGNORED_INITIAL_VALUE;
+    gl::GenVertexArrays(AMOUNT_OF_OBJECTS_TO_CREATE, &mut vertex_attribute_object_id);
+    gl::BindVertexArray(vertex_attribute_object_id);
 
     // * Generate a VBO and bind it
     let mut buffer_id: u32 = IGNORED_INITIAL_VALUE;
@@ -72,39 +75,38 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     let size_of_vertex_array_in_bytes = byte_size_of_array(&vertices[..]);
     gl::BufferData(gl::ARRAY_BUFFER,
                    size_of_vertex_array_in_bytes,
-                   vertices.as_ptr().cast(),
-                   gl::STATIC_DRAW
+                   pointer_to_array(&vertices[..]),
+                   gl::STATIC_DRAW,
     );
 
-    // * Configure a VAP for the data and enable it
-    const INDEX: gl::types::GLuint = 0;
     let rank_of_vertex_array = 3;
+    let stride = INFER_STRIDE_FROM_RANK_AND_DATATYPE;
     gl::VertexAttribPointer(
         INDEX,
         rank_of_vertex_array,
         gl::FLOAT,
         gl::FALSE,
-        size_of::<f32>(),
-        ptr::null()
+        stride,
+        ptr::null(),
     );
 
     gl::EnableVertexAttribArray(INDEX);
 
     // * Generate a IBO and bind it
-    let mut index_buffer_id = IGNORED_INITIAL_VALUE;
-    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut index_buffer_id);
-    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_id);
+    let mut index_buffer_object_id = IGNORED_INITIAL_VALUE;
+    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut index_buffer_object_id);
+    gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_object_id);
     // * Fill it with data
 
     let size_of_index_vector_in_bytes = byte_size_of_array(indices);
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER,
         size_of_index_vector_in_bytes,
-        indices.as_ptr().cast(), gl::STATIC_DRAW
+        pointer_to_array(&indices[..]), gl::STATIC_DRAW,
     );
     // * Return the ID of the VAO
 
-    return vertex_id;
+    return vertex_attribute_object_id;
 }
 
 
@@ -170,8 +172,8 @@ fn main() {
         // == // Set up your VAO around here
 
         let my_vao = unsafe {
-            let vertices = vec![-0.6, 0.0, 0.6];
-            let indices = vec![0,0,1,2,0,1,1,2,1];
+            let vertices = vec![-0.6, -0.6, 0.0, 0.6, -0.6, 0.0, 0.0, 0.6, 0.0];
+            let indices = vec![1, 2, 3,3,2,1,1,3,2];
             create_vao(&vertices, &indices)
         };
 
@@ -185,21 +187,16 @@ fn main() {
         // of just using the correct path), but it only needs to be called once
 
 
-/*        let simple_shader = unsafe {
+        let path_to_fragment_shader = "./shaders/simple.frag";
+        let path_to_vertex_shader = "./shaders/simple.vert";
+        let shader = unsafe {
             shader::ShaderBuilder::new()
-                .attach_file("src/shader.rs")
+                .attach_file(path_to_vertex_shader)
+                .attach_file(path_to_fragment_shader)
                 .link()
-        };*/
+                .activate();
+        };
 
-        unsafe {
-            gl::DrawElements(
-                gl::TRIANGLE_STRIP,
-                3,
-                gl::UNSIGNED_INT,
-                ptr::null()
-            );
-
-        }
 
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
@@ -265,7 +262,15 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
+                gl::BindVertexArray(my_vao);
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    3,
+                    gl::UNSIGNED_INT,
+                    ptr::null(),
+                );
             }
+
 
             // Display the new color buffer on the display
             context.swap_buffers().unwrap(); // we use "double buffering" to avoid artifacts

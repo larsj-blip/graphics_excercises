@@ -5,6 +5,7 @@ use std::{
     ffi::CString,
     path::Path,
 };
+use libc::c_char;
 
 pub struct Shader {
     pub program_id: u32,
@@ -76,7 +77,8 @@ impl ShaderBuilder {
                 .expect("Failed to parse file extension.");
             let shader_src = std::fs::read_to_string(path)
                 .expect(&format!("Failed to read shader source. {}", shader_path));
-            self.compile_shader(&shader_src, shader_type)
+            let builder = self.compile_shader(&shader_src, shader_type);
+            return builder;
         } else {
             panic!("Failed to read extension of file with path: {}", shader_path);
         }
