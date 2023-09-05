@@ -179,11 +179,13 @@ fn main() {
                             0.0, 0.3, 0.0,
                             0.2, 0.3, 0.0,
                             -0.4, 0.9, 0.0,
-        0.0, -0.6, 0.0];
+                            0.0, -0.6, 0.0,
+                            -0.2, 0.3, 0.0];
         let triangles = vec![0, 8, 3,
                              8, 1, 4,
                              3, 4, 5,
-            6,7,8
+                             6, 2, 5,
+                             5, 7, 9,
         ];
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles)
@@ -281,7 +283,7 @@ fn main() {
                     gl::TRIANGLES,
                     size_of_indices_vector,
                     gl::UNSIGNED_INT,
-                    0 as *const _
+                    0 as *const _,
                 );
             }
 

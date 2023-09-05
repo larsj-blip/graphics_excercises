@@ -1,4 +1,4 @@
----
+    ---
 # This is a YAML preamble, defining pandoc meta-variables.
 # Reference: https://pandoc.org/MANUAL.html#variables
 # Change them as you see fit.
