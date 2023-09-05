@@ -171,21 +171,10 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let vertices = vec![-0.6, -0.6, 0.0,
-                            0.6, -0.6, 0.0,
-                            0.0, 0.6, 0.0,
-                            -0.3, -0.3, 0.0,
-                            0.3, -0.3, 0.0,
-                            0.0, 0.3, 0.0,
-                            0.2, 0.3, 0.0,
-                            -0.4, 0.9, 0.0,
-                            0.0, -0.6, 0.0,
-                            -0.2, 0.3, 0.0];
-        let triangles = vec![0, 8, 3,
-                             8, 1, 4,
-                             3, 4, 5,
-                             6, 2, 5,
-                             5, 7, 9,
+        let vertices = vec![0.6, -0.8, -1.2,
+                            0.0, 0.4, 0.0,
+                            -0.8, -0.2, 1.2];
+        let triangles = vec![0, 1, 2
         ];
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles)
