@@ -39,7 +39,7 @@ fn pointer_to_array<T>(val: &[T]) -> *const c_void {
     &val[0] as *const T as *const c_void
 }
 
-fn pointer_to_mutable_array<T>(val: &[T]) -> *mut GLfloat {
+fn raw_pointer_to_mutable_array<T>(val: &[T]) -> *mut GLfloat {
     &val[0] as *const T as *mut gl::types::GLfloat
 }
 
@@ -280,7 +280,7 @@ fn main() {
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 let mut color_uniform_value_array = [0.0, 0.0, 0.0, 0.0];
-                gl::GetUniformfv(shader_program.program_id, LOCATION_INDEX_FRAGMENT_SHADER_COLOR, pointer_to_mutable_array(&color_uniform_value_array[..]));
+                gl::GetUniformfv(shader_program.program_id, LOCATION_INDEX_FRAGMENT_SHADER_COLOR, raw_pointer_to_mutable_array(&color_uniform_value_array[..]));
                 let updated_color_uniform_value_array = update_colors(&color_uniform_value_array);
                 gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, updated_color_uniform_value_array[0] as GLfloat,
                               updated_color_uniform_value_array[1] as GLfloat,
@@ -391,8 +391,8 @@ fn update_colors(current_color: &[f32; 4]) -> [f32; 4] {
     return new_color_array;
 }
 
-fn change_color_by_weighted_amount(color_to_be_updated: f32, weight: f32) -> f32 {
-    let mut intermediate_value = color_to_be_updated + weight;
+fn change_color_by_weighted_amount(color_value_to_be_updated: f32, weight: f32) -> f32 {
+    let mut intermediate_value = color_value_to_be_updated + weight;
     if intermediate_value >= 1.0 {
         return 0.0;
     }
