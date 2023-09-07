@@ -38,6 +38,7 @@ fn byte_size_of_array<T>(val: &[T]) -> isize {
 fn pointer_to_array<T>(val: &[T]) -> *const c_void {
     &val[0] as *const T as *const c_void
 }
+
 fn pointer_to_mutable_array<T>(val: &[T]) -> *mut GLfloat {
     &val[0] as *const T as *mut gl::types::GLfloat
 }
@@ -181,7 +182,7 @@ fn main() {
         let vertices = vec![0.6, -0.8, -1.2,
                             0.0, 0.4, 0.0,
                             -0.8, -0.2, 1.2];
-        let triangles = vec![0, 1, 2
+        let triangles = vec![0, 1, 2,
         ];
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles)
@@ -199,16 +200,16 @@ fn main() {
 
         let path_to_fragment_shader = "./shaders/simple.frag";
         let path_to_vertex_shader = "./shaders/simple.vert";
-            let shader_program:Shader =
-         unsafe {
-             let program= shader::ShaderBuilder::new()
-                 .attach_file(path_to_vertex_shader)
-                .attach_file(path_to_fragment_shader)
-                .link();
+        let shader_program: Shader =
+            unsafe {
+                let program = shader::ShaderBuilder::new()
+                    .attach_file(path_to_vertex_shader)
+                    .attach_file(path_to_fragment_shader)
+                    .link();
 
-                 program.activate();
-             program
-        };
+                program.activate();
+                program
+            };
 
         let initial_uniform = unsafe {
             gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, 0.1, 0.1, 0.1, 0.1);
@@ -278,9 +279,13 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                let mut color_uniform_value_array = [0.0,0.0,0.0,0.0];
+                let mut color_uniform_value_array = [0.0, 0.0, 0.0, 0.0];
                 gl::GetUniformfv(shader_program.program_id, LOCATION_INDEX_FRAGMENT_SHADER_COLOR, pointer_to_mutable_array(&color_uniform_value_array[..]));
                 let updated_color_uniform_value_array = update_colors(&color_uniform_value_array);
+                gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, updated_color_uniform_value_array[0] as GLfloat,
+                              updated_color_uniform_value_array[1] as GLfloat,
+                              updated_color_uniform_value_array[2] as GLfloat,
+                              updated_color_uniform_value_array[1] as GLfloat);
                 gl::BindVertexArray(vao_1);
                 let size_of_indices_vector = triangles.len() as gl::types::GLsizei;
                 gl::DrawElements(
@@ -377,8 +382,18 @@ fn main() {
 }
 
 fn update_colors(current_color: &[f64; 4]) -> [f64; 4] {
-    for color_value in current_color {
+    let new_color_x = change_color_by_weighted_amount(current_color, 1.01);
+    let new_color_y = current_color[0] * 1.01;
+    let new_color_z = current_color[0] * 1.01;
+    let new_color_w = current_color[0] * 1.01;
 
-        if color_value >= 1.0
+}
+
+fn change_color_by_weighted_amount(current_color: &[f64; 4], weight: f64) -> f64 {
+    let mut intermediate_value = current_color[0] + weight;
+    if intermediate_value >= 1.0 {
+
     }
+}
+
 }
