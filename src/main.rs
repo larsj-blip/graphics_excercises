@@ -12,12 +12,14 @@ extern crate nalgebra_glm as glm;
 use std::{mem, ptr, os::raw::c_void};
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
+use gl::types::GLfloat;
 
 mod shader;
 mod util;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
+use crate::shader::Shader;
 
 // initial window size
 const INITIAL_SCREEN_W: u32 = 800;
@@ -35,6 +37,9 @@ fn byte_size_of_array<T>(val: &[T]) -> isize {
 // Example usage:  pointer_to_array(my_array)
 fn pointer_to_array<T>(val: &[T]) -> *const c_void {
     &val[0] as *const T as *const c_void
+}
+fn pointer_to_mutable_array<T>(val: &[T]) -> *mut GLfloat {
+    &val[0] as *const T as *mut gl::types::GLfloat
 }
 
 // Get the size of the given type in bytes
@@ -110,6 +115,8 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
 }
 
 
+const LOCATION_INDEX_FRAGMENT_SHADER_COLOR: gl::types::GLint = 2;
+
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
     let el = glutin::event_loop::EventLoop::new();
@@ -180,7 +187,6 @@ fn main() {
             create_vao(&vertices, &triangles)
         };
 
-
         // == // Set up your shaders here
 
         // Basic usage of shader helper:
@@ -193,14 +199,20 @@ fn main() {
 
         let path_to_fragment_shader = "./shaders/simple.frag";
         let path_to_vertex_shader = "./shaders/simple.vert";
-        let shader = unsafe {
-            shader::ShaderBuilder::new()
-                .attach_file(path_to_vertex_shader)
+            let shader_program:Shader =
+         unsafe {
+             let program= shader::ShaderBuilder::new()
+                 .attach_file(path_to_vertex_shader)
                 .attach_file(path_to_fragment_shader)
-                .link()
-                .activate();
+                .link();
+
+                 program.activate();
+             program
         };
 
+        let initial_uniform = unsafe {
+            gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, 0.1, 0.1, 0.1, 0.1);
+        };
 
         // Used to demonstrate keyboard handling for exercise 2.
         let mut _arbitrary_number = 0.0; // feel free to remove
@@ -266,6 +278,9 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
+                let mut color_uniform_value_array = [0.0,0.0,0.0,0.0];
+                gl::GetUniformfv(shader_program.program_id, LOCATION_INDEX_FRAGMENT_SHADER_COLOR, pointer_to_mutable_array(&color_uniform_value_array[..]));
+                let updated_color_uniform_value_array = update_colors(&color_uniform_value_array);
                 gl::BindVertexArray(vao_1);
                 let size_of_indices_vector = triangles.len() as gl::types::GLsizei;
                 gl::DrawElements(
@@ -359,4 +374,11 @@ fn main() {
             _ => {}
         }
     });
+}
+
+fn update_colors(current_color: &[f64; 4]) -> [f64; 4] {
+    for color_value in current_color {
+
+        if color_value >= 1.0
+    }
 }
