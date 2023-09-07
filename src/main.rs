@@ -381,19 +381,22 @@ fn main() {
     });
 }
 
-fn update_colors(current_color: &[f64; 4]) -> [f64; 4] {
-    let new_color_x = change_color_by_weighted_amount(current_color, 1.01);
-    let new_color_y = current_color[0] * 1.01;
-    let new_color_z = current_color[0] * 1.01;
-    let new_color_w = current_color[0] * 1.01;
+fn update_colors(current_color: &[f32; 4]) -> [f32; 4] {
+    let new_color_x = change_color_by_weighted_amount(current_color[0], 0.01);
+    let new_color_y = change_color_by_weighted_amount(current_color[1], 0.005);
+    let new_color_z = change_color_by_weighted_amount(current_color[2], 0.0025);
+    let new_color_w = change_color_by_weighted_amount(current_color[3], 0.00125);
 
+    let new_color_array: [f32; 4] =  [new_color_x, new_color_y, new_color_z, new_color_w];
+    return new_color_array;
 }
 
-fn change_color_by_weighted_amount(current_color: &[f64; 4], weight: f64) -> f64 {
-    let mut intermediate_value = current_color[0] + weight;
+fn change_color_by_weighted_amount(color_to_be_updated: f32, weight: f32) -> f32 {
+    let mut intermediate_value = color_to_be_updated + weight;
     if intermediate_value >= 1.0 {
-
+        return 0.0;
     }
+    return intermediate_value;
 }
 
-}
+
