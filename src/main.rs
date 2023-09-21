@@ -62,7 +62,7 @@ fn offset<T>(n: u32) -> *const c_void {
 const INDEX: gl::types::GLuint = 0;
 
 // == // Generate your VAO here
-unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
     const INFER_STRIDE_FROM_RANK_AND_DATATYPE: gl::types::GLsizei = 0;
     const AMOUNT_OF_OBJECTS_TO_CREATE: gl::types::GLsizei = 1;
     const IGNORED_INITIAL_VALUE: u32 = 0;
@@ -184,8 +184,9 @@ fn main() {
                             -0.8, -0.2, 1.2];
         let triangles = vec![0, 1, 2,
         ];
+        let colors :Vec<f32> = vec![0.1,0.2,0.3,0.7];
         let vao_1 = unsafe {
-            create_vao(&vertices, &triangles)
+            create_vao(&vertices, &triangles, &colors)
         };
 
         // == // Set up your shaders here
