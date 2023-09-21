@@ -9,6 +9,7 @@
 */
 extern crate nalgebra_glm as glm;
 
+use rand::prelude::*;
 use std::{mem, ptr, os::raw::c_void};
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
@@ -16,6 +17,8 @@ use gl::types::GLfloat;
 
 mod shader;
 mod util;
+
+
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -179,12 +182,18 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let vertices = vec![0.6, -0.8, -1.2,
-                            0.0, 0.4, 0.0,
-                            -0.8, -0.2, 1.2];
+        let vertices = vec![-0.6, -0.8, -1.0,
+                            0.8, 0.8, 1.0,
+                            0., 0.6, 0.0,
+        ];
         let triangles = vec![0, 1, 2,
         ];
-        let colors :Vec<f32> = vec![0.1,0.2,0.3,0.7];
+        let mut colors :Vec<f32> = Vec::new();
+        for vertex in &vertices {
+            let mut color_vector = create_color_vector();
+            colors.append(&mut color_vector);
+        }
+        println!("value 1 {}", colors[0]);
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles, &colors)
         };
@@ -280,13 +289,6 @@ fn main() {
 
 
                 // == // Issue the necessary gl:: commands to draw your scene here
-                let mut color_uniform_value_array = [0.0, 0.0, 0.0, 0.0];
-                gl::GetUniformfv(shader_program.program_id, LOCATION_INDEX_FRAGMENT_SHADER_COLOR, raw_pointer_to_mutable_array(&color_uniform_value_array[..]));
-                let updated_color_uniform_value_array = update_colors(&color_uniform_value_array);
-                gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, updated_color_uniform_value_array[0] as GLfloat,
-                              updated_color_uniform_value_array[1] as GLfloat,
-                              updated_color_uniform_value_array[2] as GLfloat,
-                              updated_color_uniform_value_array[1] as GLfloat);
                 gl::BindVertexArray(vao_1);
                 let size_of_indices_vector = triangles.len() as gl::types::GLsizei;
                 gl::DrawElements(
@@ -382,22 +384,18 @@ fn main() {
     });
 }
 
-fn update_colors(current_color: &[f32; 4]) -> [f32; 4] {
-    let new_color_x = change_color_by_weighted_amount(current_color[0], 0.01);
-    let new_color_y = change_color_by_weighted_amount(current_color[1], 0.005);
-    let new_color_z = change_color_by_weighted_amount(current_color[2], 0.0025);
-    let new_color_w = change_color_by_weighted_amount(current_color[3], 0.00125);
-
-    let new_color_array: [f32; 4] =  [new_color_x, new_color_y, new_color_z, new_color_w];
-    return new_color_array;
-}
-
-fn change_color_by_weighted_amount(color_value_to_be_updated: f32, weight: f32) -> f32 {
-    let mut intermediate_value = color_value_to_be_updated + weight;
-    if intermediate_value >= 1.0 {
-        return 0.0;
+fn create_color_vector() -> Vec<f32> {
+    let mut iterations = 0;
+    let mut color_vector: Vec<f32> = Vec::new();
+    let length_of_color_vector = 4;
+    while iterations < length_of_color_vector {
+        let entry: f32 = rand::thread_rng().gen_range(0..1000) as f32 / 1000.0;
+        color_vector.push(entry)
     }
-    return intermediate_value;
+    color_vector
 }
+
+
+
 
 
