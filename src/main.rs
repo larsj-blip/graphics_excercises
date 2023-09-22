@@ -14,6 +14,7 @@ use std::{mem, ptr, os::raw::c_void};
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
 use gl::types::{GLfloat, GLsizei};
+use glm::vec4;
 
 mod shader;
 mod util;
@@ -152,8 +153,6 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
-    let mut oscillation_direction = 1.0;
-    let mut uniform_value = 0.0;
     let el = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
         .with_title("Gloom-rs")
@@ -193,6 +192,8 @@ fn main() {
         };
 
         let mut window_aspect_ratio = INITIAL_SCREEN_W as f32 / INITIAL_SCREEN_H as f32;
+
+
 
         // Set up openGL
         unsafe {
@@ -267,13 +268,15 @@ fn main() {
                 program
             };
 
-        let initial_uniform = unsafe {
-            gl::Uniform1f(UNIFORM_INDEX, 0.0);
+        let uniform_matrix = unsafe {
+            let initial_matrix: glm::Mat4 = glm::identity();
+            gl::UniformMatrix4fv(UNIFORM_INDEX, 1, false as gl::types::GLboolean, initial_matrix.as_ptr());
+            initial_matrix
         };
 
         // Used to demonstrate keyboard handling for exercise 2.
-        let mut _arbitrary_number = 0.0; // feel free to remove
-
+        let mut translation_vector_from_keypresses = [0.0, 0.0, 0.0];
+        let mut camera_rotation = vec![0.0,0.0];
 
         // The main rendering loop
         let first_frame_time = std::time::Instant::now();
@@ -303,13 +306,36 @@ fn main() {
                         // The `VirtualKeyCode` enum is defined here:
                         //    https://docs.rs/winit/0.25.0/winit/event/enum.VirtualKeyCode.html
 
+                        VirtualKeyCode::Left => {
+                            camera_rotation[0] -= delta_time;
+                        }
+                        VirtualKeyCode::Right => {
+                            camera_rotation[0] += delta_time;
+                        }
+                        VirtualKeyCode::Up => {
+                            camera_rotation[1] -= delta_time;
+                        }
+                        VirtualKeyCode::Down => {
+                            camera_rotation[1] += delta_time;
+                        }
+                        VirtualKeyCode::W => {
+                            translation_vector_from_keypresses[2] -= delta_time;
+                        }
                         VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                            translation_vector_from_keypresses[0] += delta_time;
                         }
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                            translation_vector_from_keypresses[0] -= delta_time;
                         }
-
+                        VirtualKeyCode::S => {
+                            translation_vector_from_keypresses[2] += delta_time;
+                        }
+                        VirtualKeyCode::LShift => {
+                            translation_vector_from_keypresses[1] += delta_time;
+                        }
+                        VirtualKeyCode::Space => {
+                            translation_vector_from_keypresses[1] -= delta_time;
+                        }
 
                         // default handler:
                         _ => {}
@@ -329,21 +355,32 @@ fn main() {
 
 
             unsafe {
-                let mut weight = 0.01;
-                if uniform_value > 1.0 || uniform_value < -1.0
-                {
-                     oscillation_direction= oscillation_direction * -1.0;
-                }
-
-                uniform_value = uniform_value + weight * oscillation_direction;
-
-
                 // Clear the color and depth buffers
                 gl::ClearColor(0.035, 0.046, 0.078, 1.0); // night sky, full opacity
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-                gl::Uniform1f(UNIFORM_INDEX, uniform_value);
 
                 // == // Issue the necessary gl:: commands to draw your scene here
+                let mut transformation_matrix: glm::Mat4 = glm::identity();
+                transformation_matrix = glm::translation(
+                    &glm::vec3(0.0, 0.0, -2.0)
+                ) * transformation_matrix;
+                let glm_translation =  glm::vec3(
+                    translation_vector_from_keypresses[0],
+                    translation_vector_from_keypresses[1],
+                    translation_vector_from_keypresses[2]
+                );
+                transformation_matrix = glm::translation(&glm_translation) * transformation_matrix;
+                transformation_matrix = glm::rotation(camera_rotation[0],&glm::vec3(0.0,1.0,0.0))*transformation_matrix;
+                transformation_matrix = glm::rotation(camera_rotation[1],&glm::vec3(1.0,0.0,0.0))*transformation_matrix;
+                transformation_matrix = glm::perspective(
+                    window_aspect_ratio,
+                    45.0,
+                    1.0,
+                    100.0,
+                ) * transformation_matrix;
+
+                gl::UniformMatrix4fv(UNIFORM_INDEX, 1, false as gl::types::GLboolean, transformation_matrix.as_ptr());
+
                 gl::BindVertexArray(vao_1);
                 let size_of_indices_vector = triangles.len() as gl::types::GLsizei;
                 gl::DrawElements(
