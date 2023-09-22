@@ -64,7 +64,7 @@ const VERTEX_VAO_INDEX: gl::types::GLuint = 0;
 
 const COLOR_VAO_INDEX: gl::types::GLuint = 4;
 
-const INDEX_UNIFORM_FRAGMENT_SHADER_COLOR: gl::types::GLint = 2;
+const UNIFORM_INDEX: gl::types::GLint = 2;
 
 
 // == // Generate your VAO here
@@ -152,6 +152,8 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
+    let mut oscillation_direction = 1.0;
+    let mut uniform_value = 0.0;
     let el = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
         .with_title("Gloom-rs")
@@ -212,18 +214,32 @@ fn main() {
         // == // Set up your VAO around here
 
         let vertices = vec![
-                            -0.8, -0.8, 1.2,
-                            0.8, 0.8, -1.2,
-                            0.0, 0.4, 0.0,
+            -1.0, -1.0, 0.5,
+            0.0, -1.0, 0.5,
+            -0.5, 0.0, 0.5,
+            -0.5, -0.5, 0.1,
+            0.5, -0.7, 0.1,
+            0.0, -0.2, 0.1,
+            -0.5, -0.5, -0.9,
+            0.75, -0.5, -0.9,
+            0.25, 0.25, -0.9,
         ];
         let triangles = vec![0, 1, 2,
+                             3, 4, 5,
+                             6, 7, 8,
         ];
-        let mut colors :Vec<f32> = Vec::new();
-        let amount_of_vertices = vertices.len()/3;
-        for _ in 0..amount_of_vertices{
-            let mut color_vector = create_color_vector();
-            colors.append(&mut color_vector);
-        }
+        let alpha = 0.6;
+        let mut colors: Vec<f32> = vec![
+            0.8, 0.0, 0.4, alpha,
+            0.8, 0.0, 0.4, alpha,
+            0.8, 0.0, 0.4, alpha,
+            0.2, 0.3, 0.7, alpha,
+            0.2, 0.3, 0.7, alpha,
+            0.2, 0.3, 0.7, alpha,
+            0.5, 0.5, 0.5, alpha,
+            0.5, 0.5, 0.5, alpha,
+            0.5, 0.5, 0.5, alpha,
+        ];
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles, &colors)
         };
@@ -252,7 +268,7 @@ fn main() {
             };
 
         let initial_uniform = unsafe {
-            gl::Uniform4f(INDEX_UNIFORM_FRAGMENT_SHADER_COLOR, 0.0, 0.0, 0.0, 0.0);
+            gl::Uniform1f(UNIFORM_INDEX, 0.0);
         };
 
         // Used to demonstrate keyboard handling for exercise 2.
@@ -313,10 +329,19 @@ fn main() {
 
 
             unsafe {
+                let mut weight = 0.01;
+                if uniform_value > 1.0 || uniform_value < -1.0
+                {
+                     oscillation_direction= oscillation_direction * -1.0;
+                }
+
+                uniform_value = uniform_value + weight * oscillation_direction;
+
+
                 // Clear the color and depth buffers
                 gl::ClearColor(0.035, 0.046, 0.078, 1.0); // night sky, full opacity
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-
+                gl::Uniform1f(UNIFORM_INDEX, uniform_value);
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 gl::BindVertexArray(vao_1);
@@ -414,33 +439,8 @@ fn main() {
     });
 }
 
-fn create_color_vector() -> Vec<f32> {
-    let mut iterations = 0;
-    let mut color_vector: Vec<f32> = Vec::new();
-    let length_of_color_vector = 4;
-    while iterations < length_of_color_vector {
-        let entry: f32 = rand::thread_rng().gen_range(0..10) as f32 / 10.0;
-        color_vector.push(entry);
-        iterations += 1;
-    }
-    color_vector[3] = 1.0;
-    return color_vector
-}
-fn update_colors(current_color: &[f32; 4]) -> [f32; 4] {
-    let new_color_x = change_color_by_weighted_amount(current_color[0], 0.01);
-    let new_color_y = change_color_by_weighted_amount(current_color[1], 0.005);
-    let new_color_z = change_color_by_weighted_amount(current_color[2], 0.0025);
-    let new_color_w = change_color_by_weighted_amount(current_color[3], 0.00125);
 
-    let new_color_array: [f32; 4] =  [new_color_x, new_color_y, new_color_z, new_color_w];
-    return new_color_array;
-}
 
-fn change_color_by_weighted_amount(color_to_be_updated: f32, weight: f32) -> f32 {
-    let mut intermediate_value = color_to_be_updated + weight;
-    if intermediate_value >= 1.0 {
-        return 0.0;
-    }
-    return intermediate_value;
-}
+
+
 
