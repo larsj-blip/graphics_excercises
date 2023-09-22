@@ -361,23 +361,23 @@ fn main() {
 
                 // == // Issue the necessary gl:: commands to draw your scene here
                 let mut transformation_matrix: glm::Mat4 = glm::identity();
-                transformation_matrix = glm::translation(
-                    &glm::vec3(0.0, 0.0, -2.0)
-                ) * transformation_matrix;
-                let glm_translation =  glm::vec3(
-                    translation_vector_from_keypresses[0],
-                    translation_vector_from_keypresses[1],
-                    translation_vector_from_keypresses[2]
-                );
-                transformation_matrix = glm::translation(&glm_translation) * transformation_matrix;
-                transformation_matrix = glm::rotation(camera_rotation[0],&glm::vec3(0.0,1.0,0.0))*transformation_matrix;
-                transformation_matrix = glm::rotation(camera_rotation[1],&glm::vec3(1.0,0.0,0.0))*transformation_matrix;
-                transformation_matrix = glm::perspective(
-                    window_aspect_ratio,
-                    45.0,
-                    1.0,
-                    100.0,
-                ) * transformation_matrix;
+                // transformation_matrix = glm::translation(
+                //     &glm::vec3(0.0, 0.0, -2.0)
+                // ) * transformation_matrix;
+                // let glm_translation =  glm::vec3(
+                //     translation_vector_from_keypresses[0],
+                //     translation_vector_from_keypresses[1],
+                //     translation_vector_from_keypresses[2]
+                // );
+                // transformation_matrix = glm::translation(&glm_translation) * transformation_matrix;
+                // transformation_matrix = glm::rotation(camera_rotation[0],&glm::vec3(0.0,1.0,0.0))*transformation_matrix;
+                // transformation_matrix = glm::rotation(camera_rotation[1],&glm::vec3(1.0,0.0,0.0))*transformation_matrix;
+                // transformation_matrix = glm::perspective(
+                //     window_aspect_ratio,
+                //     45.0,
+                //     1.0,
+                //     100.0,
+                // ) * transformation_matrix;
 
                 gl::UniformMatrix4fv(UNIFORM_INDEX, 1, false as gl::types::GLboolean, transformation_matrix.as_ptr());
 
