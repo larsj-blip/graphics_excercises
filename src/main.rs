@@ -13,12 +13,10 @@ use rand::prelude::*;
 use std::{mem, ptr, os::raw::c_void};
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
-use gl::types::GLfloat;
+use gl::types::{GLfloat, GLsizei};
 
 mod shader;
 mod util;
-
-
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -62,23 +60,29 @@ fn offset<T>(n: u32) -> *const c_void {
 // ptr::null()
 
 
-const INDEX: gl::types::GLuint = 0;
+const VERTEX_VAO_INDEX: gl::types::GLuint = 0;
+
+const COLOR_VAO_INDEX: gl::types::GLuint = 4;
+
+const INDEX_UNIFORM_FRAGMENT_SHADER_COLOR: gl::types::GLint = 2;
+
 
 // == // Generate your VAO here
 unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>) -> u32 {
-    const INFER_STRIDE_FROM_RANK_AND_DATATYPE: gl::types::GLsizei = 0;
-    const AMOUNT_OF_OBJECTS_TO_CREATE: gl::types::GLsizei = 1;
+    let infer_stride_from_rank_and_datatype: gl::types::GLsizei = 0;
+    let create_single_object: gl::types::GLsizei = 1;
     const IGNORED_INITIAL_VALUE: u32 = 0;
     // * Generate a VAO and bind it
 
-    let mut vertex_attribute_object_id: u32 = IGNORED_INITIAL_VALUE;
-    gl::GenVertexArrays(AMOUNT_OF_OBJECTS_TO_CREATE, &mut vertex_attribute_object_id);
-    gl::BindVertexArray(vertex_attribute_object_id);
+    let ignored_initial_value = 0;
+    let mut vertex_array_object_id: u32 = ignored_initial_value;
+    gl::GenVertexArrays(create_single_object, &mut vertex_array_object_id);
+    gl::BindVertexArray(vertex_array_object_id);
 
     // * Generate a VBO and bind it
-    let mut buffer_id: u32 = IGNORED_INITIAL_VALUE;
-    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut buffer_id);
-    gl::BindBuffer(gl::ARRAY_BUFFER, buffer_id);
+    let mut vertex_buffer_id: u32 = ignored_initial_value;
+    gl::GenBuffers(create_single_object, &mut vertex_buffer_id);
+    gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_id);
 
     // * Fill it with data
     let size_of_vertex_array_in_bytes = byte_size_of_array(&vertices[..]);
@@ -89,9 +93,9 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
     );
 
     let rank_of_vertex_array = 3;
-    let stride = INFER_STRIDE_FROM_RANK_AND_DATATYPE;
+    let stride = infer_stride_from_rank_and_datatype;
     gl::VertexAttribPointer(
-        INDEX,
+        VERTEX_VAO_INDEX,
         rank_of_vertex_array,
         gl::FLOAT,
         gl::FALSE,
@@ -99,27 +103,52 @@ unsafe fn create_vao(vertices: &Vec<f32>, indices: &Vec<u32>, colors: &Vec<f32>)
         ptr::null(),
     );
 
-    gl::EnableVertexAttribArray(INDEX);
+    gl::EnableVertexAttribArray(VERTEX_VAO_INDEX);
 
     // * Generate a IBO and bind it
-    let mut index_buffer_object_id = IGNORED_INITIAL_VALUE;
-    gl::GenBuffers(AMOUNT_OF_OBJECTS_TO_CREATE, &mut index_buffer_object_id);
+
+    let mut color_buffer_object_id = ignored_initial_value;
+
+    gl::GenBuffers(create_single_object, &mut color_buffer_object_id);
+    gl::BindBuffer(gl::ARRAY_BUFFER, color_buffer_object_id);
+    // * Fill it with data
+
+    let size_of_color_vector_in_bytes = byte_size_of_array(&colors);
+    gl::BufferData(
+        gl::ARRAY_BUFFER,
+        size_of_color_vector_in_bytes,
+        pointer_to_array(&&colors[..]), gl::STATIC_DRAW,
+    );
+
+    let rank_of_color_array = 4;
+    let stride = infer_stride_from_rank_and_datatype;
+    gl::VertexAttribPointer(
+        COLOR_VAO_INDEX,
+        rank_of_color_array,
+        gl::FLOAT,
+        gl::FALSE,
+        stride,
+        ptr::null(),
+    );
+    gl::EnableVertexAttribArray(COLOR_VAO_INDEX);
+
+    // * Generate a IBO and bind it
+
+    let mut index_buffer_object_id = 0;
+    gl::GenBuffers(create_single_object, &mut index_buffer_object_id);
     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, index_buffer_object_id);
     // * Fill it with data
 
-    let size_of_index_vector_in_bytes = byte_size_of_array(indices);
+    let size_of_index_vector_in_bytes = byte_size_of_array(&indices);
     gl::BufferData(
         gl::ELEMENT_ARRAY_BUFFER,
         size_of_index_vector_in_bytes,
-        pointer_to_array(&indices[..]), gl::STATIC_DRAW,
+        pointer_to_array(&&indices[..]), gl::STATIC_DRAW,
     );
     // * Return the ID of the VAO
-
-    return vertex_attribute_object_id;
+    return vertex_array_object_id;
 }
 
-
-const LOCATION_INDEX_FRAGMENT_SHADER_COLOR: gl::types::GLint = 2;
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -182,18 +211,19 @@ fn main() {
 
         // == // Set up your VAO around here
 
-        let vertices = vec![-0.6, -0.8, -1.0,
-                            0.8, 0.8, 1.0,
-                            0., 0.6, 0.0,
+        let vertices = vec![
+                            -0.8, -0.8, 1.2,
+                            0.8, 0.8, -1.2,
+                            0.0, 0.4, 0.0,
         ];
         let triangles = vec![0, 1, 2,
         ];
         let mut colors :Vec<f32> = Vec::new();
-        for vertex in &vertices {
+        let amount_of_vertices = vertices.len()/3;
+        for _ in 0..amount_of_vertices{
             let mut color_vector = create_color_vector();
             colors.append(&mut color_vector);
         }
-        println!("value 1 {}", colors[0]);
         let vao_1 = unsafe {
             create_vao(&vertices, &triangles, &colors)
         };
@@ -222,7 +252,7 @@ fn main() {
             };
 
         let initial_uniform = unsafe {
-            gl::Uniform4f(LOCATION_INDEX_FRAGMENT_SHADER_COLOR, 0.1, 0.1, 0.1, 0.1);
+            gl::Uniform4f(INDEX_UNIFORM_FRAGMENT_SHADER_COLOR, 0.0, 0.0, 0.0, 0.0);
         };
 
         // Used to demonstrate keyboard handling for exercise 2.
@@ -389,13 +419,28 @@ fn create_color_vector() -> Vec<f32> {
     let mut color_vector: Vec<f32> = Vec::new();
     let length_of_color_vector = 4;
     while iterations < length_of_color_vector {
-        let entry: f32 = rand::thread_rng().gen_range(0..1000) as f32 / 1000.0;
-        color_vector.push(entry)
+        let entry: f32 = rand::thread_rng().gen_range(0..10) as f32 / 10.0;
+        color_vector.push(entry);
+        iterations += 1;
     }
-    color_vector
+    color_vector[3] = 1.0;
+    return color_vector
+}
+fn update_colors(current_color: &[f32; 4]) -> [f32; 4] {
+    let new_color_x = change_color_by_weighted_amount(current_color[0], 0.01);
+    let new_color_y = change_color_by_weighted_amount(current_color[1], 0.005);
+    let new_color_z = change_color_by_weighted_amount(current_color[2], 0.0025);
+    let new_color_w = change_color_by_weighted_amount(current_color[3], 0.00125);
+
+    let new_color_array: [f32; 4] =  [new_color_x, new_color_y, new_color_z, new_color_w];
+    return new_color_array;
 }
 
-
-
-
+fn change_color_by_weighted_amount(color_to_be_updated: f32, weight: f32) -> f32 {
+    let mut intermediate_value = color_to_be_updated + weight;
+    if intermediate_value >= 1.0 {
+        return 0.0;
+    }
+    return intermediate_value;
+}
 
